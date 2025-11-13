@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title><%= project_name %></title>
+  <style>
+    body { font-family: monospace; background: #0d1117; color: #c9d1d9; padding: 20px; font-size: 24px; }
+    pre { background: #161b22; padding: 16px; border-radius: 8px; }
+    .header { margin-bottom: 12px; color: #58a6ff; }
+  </style>
+</head>
+<body>
+  <div class="header"><%= project_name %></div>
+  <pre id="output">Connecting...</pre>
+
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" crossorigin="anonymous"></script>
+  <script>
+    const socket = io('/', { transports: ['websocket'] });
+    const output = document.getElementById('output');
+
+    function render(identifierCount, categoryCount) {
+      const json = {
+        project_name: '<%= project_name %>',
+        message: '<%= message %>',
+        version: '<%= version %>',
+        identifiers_length: identifierCount,
+        identifiers_category_length: categoryCount
+      };
+
+      output.textContent = JSON.stringify(json, null, 2);
+    }
+
+    socket.on('connect', () => {
+      output.textContent = 'Connected to WebSocket server... waiting for updates';
+    });
+
+    socket.on('server:heartbeat', (data) => {
+      render(data.identifiers_length, data.identifiers_category_length);
+    });
+
+    socket.on('disconnect', () => {
+      output.textContent = 'Disconnected from WebSocket server.';
+    });
+
+    socket.on('connect_error', (err) => {
+      output.textContent = 'Connection error: ' + err.message;
+    });
+  </script>
+</body>
+</html>
